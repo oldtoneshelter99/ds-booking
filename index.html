@@ -100,7 +100,11 @@ main{display:grid;grid-template-columns:1fr;gap:16px;padding:14px 16px 110px;max
 label{display:block;font-size:.72rem;color:var(--muted);margin:10px 0 5px;letter-spacing:.05em}
 input,textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-size:16px;outline:none}
 input:focus,textarea:focus{border-color:var(--gold)}
-input[type=date]{color-scheme:dark;font-family:var(--mono)}
+input{min-width:0;max-width:100%;display:block}
+.row2>div{min-width:0}
+input[type=date]{color-scheme:dark;font-family:var(--mono);-webkit-appearance:none;appearance:none;min-height:46px;text-align:left}
+input[type=date]::-webkit-date-and-time-value{text-align:left}
+#fTime{font-family:var(--mono);min-height:46px;letter-spacing:.05em}
 textarea{resize:vertical;min-height:54px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:7px 11px;font-family:var(--mono);font-size:.82rem}
@@ -115,9 +119,10 @@ textarea{resize:vertical;min-height:54px}
 .cancelEdit{margin-top:8px;width:100%;border:1px solid var(--line);background:none;border-radius:12px;padding:11px;color:var(--muted)}
 
 /* toast + pin */
-#toast{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top));transform:translate(-50%,-150%);z-index:90;
-  background:var(--card);border:1px solid var(--gold);border-radius:999px;padding:10px 18px;font-size:.88rem;transition:transform .2s}
-#toast.show{transform:translate(-50%,0)}
+#toast{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top));transform:translate(-50%,-30px);z-index:90;
+  background:var(--card);border:1px solid var(--gold);border-radius:999px;padding:10px 18px;font-size:.88rem;
+  opacity:0;visibility:hidden;pointer-events:none;transition:transform .2s,opacity .2s,visibility .2s}
+#toast.show{transform:translate(-50%,0);opacity:1;visibility:visible}
 #toast.err{border-color:var(--danger)}
 #pinGate{position:fixed;inset:0;z-index:100;background:var(--bg);display:none;align-items:center;justify-content:center;padding:24px}
 #pinGate .box{width:100%;max-width:320px;text-align:center}
@@ -157,7 +162,7 @@ textarea{resize:vertical;min-height:54px}
     <form id="form" autocomplete="off">
       <div class="row2">
         <div><label>日期</label><input type="date" id="fDate" required></div>
-        <div><label>時間</label><input type="text" id="fTime" inputmode="numeric" placeholder="21:00" pattern="\d{1,2}:\d{2}" required></div>
+        <div><label>時間</label><input type="text" id="fTime" inputmode="numeric" placeholder="直接打 2130" maxlength="5" required></div>
       </div>
       <div class="chips" id="timeChips" style="margin-top:8px"></div>
       <label>姓名</label><input id="fName" required placeholder="王先生 / Matt">
@@ -203,7 +208,19 @@ function fmt(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate
 function todayStr(){const d=new Date(); if(d.getHours()<6) d.setDate(d.getDate()-1); return fmt(d)}
 function addDays(s,n){const d=new Date(s+'T12:00:00'); d.setDate(d.getDate()+n); return fmt(d)}
 function wd(s){return new Date(s+'T12:00:00').getDay()}
-function normTime(t){t=String(t||'').trim().replace('：',':'); const m=t.match(/^(\d{1,2}):?(\d{2})$/); return m?pad(+m[1])+':'+m[2]:t}
+/* 時間：可只打數字。2145→21:45、930→21:30、22→22:00；6～11 點自動當晚上 */
+function normTime(t){
+  t=String(t||'').trim().replace('：',':');
+  let h,m, mm=t.match(/^(\d{1,2}):(\d{1,2})$/);
+  if(mm){h=+mm[1];m=+mm[2]}
+  else{const d=t.replace(/\D/g,''); if(!d) return t;
+    if(d.length<=2){h=+d;m=0} else if(d.length===3){h=+d[0];m=+d.slice(1)} else {h=+d.slice(0,2);m=+d.slice(2,4)}}
+  if(h>=6&&h<=11) h+=12;
+  if(h===24) h=0;
+  if(h>23||m>59) return t;
+  return pad(h)+':'+pad(m);
+}
+function liveTime(v){const d=v.replace(/\D/g,'').slice(0,4); return d.length>=3?d.slice(0,d.length-2)+':'+d.slice(-2):d}
 function sortKey(t){const [h,m]=normTime(t).split(':').map(Number); return ((h<6?h+24:h)*60)+(m||0)}
 function label(s){const t=todayStr(); if(s===t)return'今天'; if(s===addDays(t,1))return'明天'; if(s===addDays(t,-1))return'昨天';
   return (+s.slice(5,7))+'/'+(+s.slice(8))+'（'+WEEK[wd(s)]+'）'}
@@ -324,7 +341,9 @@ function buildChips(){
 }
 function markTime(){const v=normTime($('fTime').value); $('timeChips').querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.t===v))}
 function markTags(){const v=$('fNote').value; $('noteChips').querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',v.includes(c.dataset.n)))}
-$('fTime').addEventListener('input',markTime); $('fNote').addEventListener('input',markTags);
+$('fTime').addEventListener('input',e=>{ if(e.inputType&&e.inputType.startsWith('delete')) return markTime(); const el=$('fTime'); el.value=liveTime(el.value); markTime(); });
+$('fTime').addEventListener('blur',()=>{ const v=normTime($('fTime').value); if(/^\d{2}:\d{2}$/.test(v)) $('fTime').value=v; markTime(); });
+$('fTime').addEventListener('focus',()=>{ setTimeout(()=>$('fTime').select(),0) }); $('fNote').addEventListener('input',markTags);
 $('minus').onclick=()=>{$('fCount').value=Math.max(1,(+$('fCount').value||1)-1)};
 $('plus').onclick=()=>{$('fCount').value=(+$('fCount').value||0)+1};
 
@@ -349,7 +368,7 @@ $('cancelEdit').onclick=()=>{resetForm(); if(innerWidth<900) closeSheet()};
 $('form').onsubmit=async e=>{
   e.preventDefault();
   const time=normTime($('fTime').value);
-  if(!/^\d{2}:\d{2}$/.test(time)) return toast('時間格式像 21:30',true);
+  if(!/^\d{2}:\d{2}$/.test(time)) return toast('時間請打數字，例如 2130',true);
   const row={date:$('fDate').value,time,name:$('fName').value.trim(),phone:$('fPhone').value.replace(/[\s-]/g,''),
              count:String(+$('fCount').value||1),note:$('fNote').value.trim()};
   const btn=$('submitBtn'); btn.disabled=true; btn.textContent='送出中…';
