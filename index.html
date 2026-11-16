@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0D0A07">
+<title>訂位｜Drunk Shelter Hankou</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=Playfair+Display:ital,wght@1,600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0D0A07; --panel:#17110B; --card:#1F1710; --line:#3A2C1C;
+  --gold:#C8903A; --gold2:#E8C07A; --cream:#E8DFC8; --muted:#9C8E76;
+  --danger:#D9534F; --ok:#6FBF73;
+  --grad:linear-gradient(90deg,#C8903A,#E8C07A);
+  --serif:"Noto Serif TC",serif; --mono:"Space Mono",monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--cream);font-family:var(--serif);}
+body{min-height:100dvh;
+  background-image:radial-gradient(ellipse at 15% -10%,rgba(200,144,58,.16),transparent 55%),
+                   radial-gradient(ellipse at 110% 110%,rgba(200,144,58,.08),transparent 50%);}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+
+/* ---------- header ---------- */
+header{position:sticky;top:0;z-index:20;background:rgba(13,10,7,.92);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);padding:12px 16px 10px;padding-top:calc(12px + env(safe-area-inset-top));}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.brand h1{margin:0;font-family:"Playfair Display",serif;font-style:italic;font-size:1.25rem;letter-spacing:.02em;
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand small{font-family:var(--mono);font-size:.62rem;letter-spacing:.3em;color:var(--muted)}
+.sync{font-family:var(--mono);font-size:.68rem;color:var(--muted);white-space:nowrap}
+.sync.err{color:var(--danger)}
+
+/* date strip */
+.strip{display:flex;gap:6px;overflow-x:auto;margin-top:10px;padding-bottom:2px;scrollbar-width:none}
+.strip::-webkit-scrollbar{display:none}
+.day{flex:0 0 auto;min-width:54px;padding:6px 4px;border:1px solid var(--line);border-radius:10px;background:var(--panel);
+  text-align:center;line-height:1.15}
+.day .w{font-size:.68rem;color:var(--muted)}
+.day .d{font-family:var(--mono);font-size:.95rem;font-weight:700}
+.day .c{font-family:var(--mono);font-size:.62rem;color:var(--gold)}
+.day.wk .w{color:var(--gold2)}
+.day.on{border-color:var(--gold);background:linear-gradient(180deg,rgba(200,144,58,.28),rgba(200,144,58,.08))}
+.day.pick{display:flex;align-items:center;justify-content:center;position:relative;min-width:48px;color:var(--gold2)}
+.day.pick input{position:absolute;inset:0;opacity:0;width:100%}
+
+/* ---------- layout ---------- */
+main{display:grid;grid-template-columns:1fr;gap:16px;padding:14px 16px 110px;max-width:1100px;margin:0 auto}
+@media(min-width:900px){
+  main{grid-template-columns:1fr 380px;padding-bottom:30px}
+  #fab,#sheetBg{display:none!important}
+  #sheet{position:sticky!important;top:150px;transform:none!important;max-height:none!important;border-radius:14px!important;
+    border:1px solid var(--line)!important;box-shadow:none!important}
+  #sheet .grab{display:none}
+}
+.summary{display:flex;align-items:baseline;justify-content:space-between;margin:2px 2px 10px}
+.summary h2{margin:0;font-size:1.05rem}
+.summary .n{font-family:var(--mono);font-size:.78rem;color:var(--muted)}
+.summary .n b{color:var(--gold2)}
+
+/* cards */
+.card{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:center;background:var(--card);
+  border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:12px;margin-bottom:10px}
+.card.arrived{opacity:.5;border-left-color:var(--ok)}
+.card.late .t{color:var(--muted)}
+.t{font-family:var(--mono);font-size:1.15rem;font-weight:700;color:var(--gold2)}
+.t small{display:block;font-size:.6rem;color:var(--muted);font-weight:400}
+.who{min-width:0}
+.who .nm{font-weight:700;font-size:1rem}
+.who .nm .pp{font-family:var(--mono);font-size:.8rem;color:var(--gold);margin-left:6px}
+.who a{font-family:var(--mono);font-size:.78rem;color:var(--muted);text-decoration:none}
+.who .note{font-size:.8rem;color:var(--cream);opacity:.85;margin-top:3px;word-break:break-all}
+.acts{display:flex;flex-direction:column;gap:6px}
+.acts button{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:5px 9px;font-size:.75rem;color:var(--cream)}
+.acts .arr{border-color:var(--gold);color:var(--gold2)}
+.card.arrived .acts .arr{border-color:var(--ok);color:var(--ok)}
+.empty{text-align:center;color:var(--muted);padding:40px 0;font-size:.9rem}
+.empty::before{content:"";display:block;width:56px;height:56px;margin:0 auto 12px;border-radius:50%;
+  background:repeating-radial-gradient(circle,#2a2016 0 2px,#17110B 2px 4px);border:1px solid var(--line)}
+.skel{height:70px;border-radius:12px;background:linear-gradient(90deg,#17110B,#231a11,#17110B);background-size:200% 100%;
+  animation:sk 1.2s infinite;margin-bottom:10px}
+@keyframes sk{to{background-position:-200% 0}}
+
+/* ---------- form sheet ---------- */
+#fab{position:fixed;right:18px;bottom:calc(20px + env(safe-area-inset-bottom));z-index:30;border:0;border-radius:999px;
+  padding:14px 22px;background:var(--grad);color:#1a1108;font-weight:900;font-size:1rem;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+#sheetBg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:40;display:none}
+#sheet{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--panel);border-top:1px solid var(--gold);
+  border-radius:18px 18px 0 0;padding:10px 16px calc(18px + env(safe-area-inset-bottom));transform:translateY(105%);
+  transition:transform .22s ease;max-height:92dvh;overflow-y:auto;box-shadow:0 -10px 30px rgba(0,0,0,.5)}
+#sheet.open{transform:none}
+.grab{width:40px;height:4px;border-radius:4px;background:var(--line);margin:0 auto 10px}
+#sheet h3{margin:0 0 12px;font-size:1.05rem;display:flex;justify-content:space-between;align-items:center}
+#sheet h3 .x{border:0;background:none;color:var(--muted);font-size:1.3rem}
+#sheet.edit h3{color:var(--gold2)}
+label{display:block;font-size:.72rem;color:var(--muted);margin:10px 0 5px;letter-spacing:.05em}
+input,textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-size:16px;outline:none}
+input:focus,textarea:focus{border-color:var(--gold)}
+input[type=date]{color-scheme:dark;font-family:var(--mono)}
+textarea{resize:vertical;min-height:54px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:7px 11px;font-family:var(--mono);font-size:.82rem}
+.chip.on{border-color:var(--gold);background:rgba(200,144,58,.22);color:var(--gold2)}
+.chip.tag{font-family:var(--serif)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.step{display:flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--bg)}
+.step button{border:0;background:none;width:44px;height:44px;font-size:1.3rem;color:var(--gold2)}
+.step input{border:0;text-align:center;font-family:var(--mono);font-weight:700;padding:0;border-radius:0}
+.submit{margin-top:16px;width:100%;border:0;border-radius:12px;padding:14px;background:var(--grad);color:#1a1108;font-weight:900;font-size:1rem}
+.submit:disabled{opacity:.5}
+.cancelEdit{margin-top:8px;width:100%;border:1px solid var(--line);background:none;border-radius:12px;padding:11px;color:var(--muted)}
+
+/* toast + pin */
+#toast{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top));transform:translate(-50%,-150%);z-index:90;
+  background:var(--card);border:1px solid var(--gold);border-radius:999px;padding:10px 18px;font-size:.88rem;transition:transform .2s}
+#toast.show{transform:translate(-50%,0)}
+#toast.err{border-color:var(--danger)}
+#pinGate{position:fixed;inset:0;z-index:100;background:var(--bg);display:none;align-items:center;justify-content:center;padding:24px}
+#pinGate .box{width:100%;max-width:320px;text-align:center}
+#pinGate h1{font-family:"Playfair Display",serif;font-style:italic;font-size:1.6rem;margin:0;
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+#pinGate p{color:var(--muted);font-family:var(--mono);font-size:.7rem;letter-spacing:.3em;margin:4px 0 24px}
+#pinGate input{text-align:center;font-family:var(--mono);font-size:1.4rem;letter-spacing:.4em}
+</style>
+</head>
+<body>
+
+<div id="pinGate"><div class="box">
+  <h1>Drunk Shelter</h1><p>— HANKOU · 訂位 —</p>
+  <form id="pinForm"><input id="pinInput" type="password" inputmode="numeric" autocomplete="off" placeholder="員工密碼" required>
+  <button class="submit" type="submit">進入</button></form>
+  <div id="pinErr" style="color:var(--danger);font-size:.85rem;margin-top:10px"></div>
+</div></div>
+
+<header>
+  <div class="brand">
+    <div><h1>Drunk Shelter</h1><small>— HANKOU · 訂位 —</small></div>
+    <span id="sync" class="sync">…</span>
+  </div>
+  <div class="strip" id="strip"></div>
+</header>
+
+<main>
+  <section>
+    <div class="summary"><h2 id="dayTitle">今天</h2><span class="n" id="dayCount"></span></div>
+    <div id="list"></div>
+  </section>
+
+  <div id="sheetBg"></div>
+  <aside id="sheet">
+    <div class="grab"></div>
+    <h3><span id="formTitle">新增訂位</span><button class="x" type="button" id="closeSheet" aria-label="關閉">×</button></h3>
+    <form id="form" autocomplete="off">
+      <div class="row2">
+        <div><label>日期</label><input type="date" id="fDate" required></div>
+        <div><label>時間</label><input type="text" id="fTime" inputmode="numeric" placeholder="21:00" pattern="\d{1,2}:\d{2}" required></div>
+      </div>
+      <div class="chips" id="timeChips" style="margin-top:8px"></div>
+      <label>姓名</label><input id="fName" required placeholder="王先生 / Matt">
+      <div class="row2">
+        <div><label>電話</label><input id="fPhone" type="tel" inputmode="tel" placeholder="09xx-xxx-xxx"></div>
+        <div><label>人數</label>
+          <div class="step"><button type="button" id="minus">−</button><input id="fCount" type="number" min="1" value="2" inputmode="numeric"><button type="button" id="plus">＋</button></div>
+        </div>
+      </div>
+      <label>備註</label>
+      <div class="chips" id="noteChips" style="margin-bottom:8px"></div>
+      <textarea id="fNote" placeholder="座位、生日、晚到…"></textarea>
+      <button class="submit" id="submitBtn" type="submit">送出訂位</button>
+      <button class="cancelEdit" id="cancelEdit" type="button" style="display:none">取消修改</button>
+    </form>
+  </aside>
+</main>
+
+<button id="fab" type="button">＋ 新增訂位</button>
+<div id="toast"></div>
+
+<script>
+/* ====== 設定 ====== */
+const API = 'https://script.google.com/macros/s/AKfycbxJ-n2p12jc5MvLvfsQ6x1BFd-0XzZm9Vix1YW0_qFwJe9a3mpDDHH8_otmzfmbM1AKcQ/exec';
+const TIMES = ['20:00','20:30','21:00','21:30','22:00','22:30','23:00','23:30','00:00','00:30','01:00'];
+const TAGS  = ['沙發','吧台','生日','晚到','歌手朋友'];
+const DAYS_AHEAD = 60;
+const WEEK = ['日','一','二','三','四','五','六'];
+
+/* ====== 狀態 ====== */
+const LS_PIN='ds_bk_pin', LS_CACHE='ds_bk_cache';
+let pin = localStorage.getItem(LS_PIN) || '';
+let rows = [];               // 所有訂位
+let sel = todayStr();        // 選中日期
+let editingId = null;
+let loadedRanges = [];       // 已向伺服器載入過的日期區間
+
+const $ = id => document.getElementById(id);
+
+/* ====== 日期工具（營業日：凌晨 06:00 前算前一天） ====== */
+function pad(n){return String(n).padStart(2,'0')}
+function fmt(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function todayStr(){const d=new Date(); if(d.getHours()<6) d.setDate(d.getDate()-1); return fmt(d)}
+function addDays(s,n){const d=new Date(s+'T12:00:00'); d.setDate(d.getDate()+n); return fmt(d)}
+function wd(s){return new Date(s+'T12:00:00').getDay()}
+function normTime(t){t=String(t||'').trim().replace('：',':'); const m=t.match(/^(\d{1,2}):?(\d{2})$/); return m?pad(+m[1])+':'+m[2]:t}
+function sortKey(t){const [h,m]=normTime(t).split(':').map(Number); return ((h<6?h+24:h)*60)+(m||0)}
+function label(s){const t=todayStr(); if(s===t)return'今天'; if(s===addDays(t,1))return'明天'; if(s===addDays(t,-1))return'昨天';
+  return (+s.slice(5,7))+'/'+(+s.slice(8))+'（'+WEEK[wd(s)]+'）'}
+
+/* ====== API ====== */
+async function apiGet(params){
+  const u = API+'?'+new URLSearchParams({...params,pin});
+  const r = await fetch(u); const j = await r.json(); if(!j.ok) throw new Error(j.error); return j;
+}
+async function apiPost(body){
+  const r = await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...body,pin})});
+  const j = await r.json(); if(!j.ok) throw new Error(j.error); return j;
+}
+
+/* ====== 快取 ====== */
+function saveCache(){try{localStorage.setItem(LS_CACHE,JSON.stringify({rows,at:Date.now()}))}catch(e){}}
+function loadCache(){try{const c=JSON.parse(localStorage.getItem(LS_CACHE)||'null'); if(c&&Array.isArray(c.rows)) rows=c.rows}catch(e){}}
+
+function setSync(txt,err){const s=$('sync'); s.textContent=txt; s.classList.toggle('err',!!err)}
+
+async function fetchRange(from,to,{silent}={}){
+  if(!silent) setSync('⟳ 同步中');
+  try{
+    const j = await apiGet({action:'list',from,to});
+    rows = rows.filter(r=>r.date<from||r.date>to).concat(j.rows);
+    loadedRanges.push([from,to]);
+    saveCache(); render();
+    const d=new Date(); setSync('✓ '+pad(d.getHours())+':'+pad(d.getMinutes()));
+  }catch(e){
+    if(e.message==='PIN'){ localStorage.removeItem(LS_PIN); pin=''; showPin('密碼錯誤或已更換'); return; }
+    setSync('⚠ 離線，顯示快取',true);
+  }
+}
+function inLoaded(d){return loadedRanges.some(([a,b])=>d>=a&&d<=b)}
+function refresh(){const t=todayStr(); return fetchRange(addDays(t,-1),addDays(t,DAYS_AHEAD))}
+
+/* ====== 畫面 ====== */
+function dayRows(d){return rows.filter(r=>r.date===d).sort((a,b)=>sortKey(a.time)-sortKey(b.time))}
+
+function renderStrip(){
+  const t=todayStr(); let h='';
+  for(let i=-1;i<14;i++){
+    const d=addDays(t,i), list=dayRows(d), w=wd(d);
+    const ppl=list.reduce((s,r)=>s+(+r.count||0),0);
+    h+=`<button class="day ${d===sel?'on':''} ${(w===5||w===6)?'wk':''}" data-d="${d}">
+      <div class="w">${i===0?'今天':i===-1?'昨天':'週'+WEEK[w]}</div><div class="d">${+d.slice(5,7)}/${+d.slice(8)}</div>
+      <div class="c">${list.length?list.length+'組 '+ppl+'人':'&nbsp;'}</div></button>`;
+  }
+  h+=`<label class="day pick" title="選其他日期">📅<input type="date" id="pickDate"></label>`;
+  const strip=$('strip'); strip.innerHTML=h;
+  strip.querySelectorAll('.day[data-d]').forEach(b=>b.onclick=()=>selectDate(b.dataset.d));
+  $('pickDate').onchange=e=>e.target.value&&selectDate(e.target.value);
+  const on=strip.querySelector('.on'); if(on) on.scrollIntoView({inline:'center',block:'nearest'});
+}
+
+function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+function renderList(){
+  const list=dayRows(sel);
+  const ppl=list.reduce((s,r)=>s+(+r.count||0),0);
+  const arrived=list.filter(r=>r.status==='arrived').length;
+  $('dayTitle').textContent=label(sel)+(label(sel).includes('/')?'':'　'+(+sel.slice(5,7))+'/'+(+sel.slice(8))+'（'+WEEK[wd(sel)]+'）');
+  $('dayCount').innerHTML=list.length?`<b>${list.length}</b> 組 · <b>${ppl}</b> 人${arrived?` · 已到 ${arrived}`:''}`:'';
+  if(!list.length){
+    $('list').innerHTML = (!inLoaded(sel)&&!rows.length) ? '<div class="skel"></div><div class="skel"></div>' : '<div class="empty">這天還沒有訂位</div>';
+    return;
+  }
+  $('list').innerHTML=list.map(r=>{
+    const late = sortKey(r.time)>=24*60;
+    return `<div class="card ${r.status==='arrived'?'arrived':''} ${late?'late':''}">
+      <div class="t">${esc(normTime(r.time))}${late?'<small>凌晨</small>':''}</div>
+      <div class="who"><div class="nm">${esc(r.name)}<span class="pp">${esc(r.count)}位</span></div>
+        ${r.phone?`<a href="tel:${esc(r.phone)}">${esc(r.phone)}</a>`:''}
+        ${r.note?`<div class="note">${esc(r.note)}</div>`:''}</div>
+      <div class="acts">
+        <button class="arr" data-a="arr" data-id="${r.id}">${r.status==='arrived'?'✓ 已到':'到店'}</button>
+        <button data-a="edit" data-id="${r.id}">編輯</button>
+        <button data-a="del" data-id="${r.id}">刪除</button>
+      </div></div>`;
+  }).join('');
+  $('list').querySelectorAll('button[data-a]').forEach(b=>b.onclick=()=>act(b.dataset.a,b.dataset.id));
+}
+function render(){renderStrip();renderList()}
+
+function selectDate(d){
+  sel=d; render();
+  if(!inLoaded(d)) fetchRange(d,d);
+  if(!editingId) $('fDate').value=d;
+}
+
+/* ====== 動作 ====== */
+async function act(a,id){
+  const r=rows.find(x=>x.id===id); if(!r) return;
+  if(a==='edit') return startEdit(r);
+  if(a==='del'){
+    if(!confirm(`刪除 ${r.name}（${normTime(r.time)}，${r.count}位）的訂位？此動作無法復原。`)) return;
+    const backup=rows.slice(); rows=rows.filter(x=>x.id!==id); render();
+    try{ await apiPost({action:'delete',id}); saveCache(); toast('已刪除'); }
+    catch(e){ rows=backup; render(); toast('刪除失敗：'+e.message,true); }
+  }
+  if(a==='arr'){
+    const prev=r.status; r.status = prev==='arrived'?'booked':'arrived'; render();
+    try{ await apiPost({action:'update',row:{id,status:r.status}}); saveCache(); }
+    catch(e){ r.status=prev; render(); toast('更新失敗：'+e.message,true); }
+  }
+}
+
+/* ====== 表單 ====== */
+function buildChips(){
+  $('timeChips').innerHTML=TIMES.map(t=>`<button type="button" class="chip" data-t="${t}">${t}</button>`).join('');
+  $('timeChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{$('fTime').value=c.dataset.t;markTime()});
+  $('noteChips').innerHTML=TAGS.map(t=>`<button type="button" class="chip tag" data-n="${t}">${t}</button>`).join('');
+  $('noteChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+    const v=$('fNote').value.trim(); const n=c.dataset.n;
+    $('fNote').value = v.includes(n) ? v.replace(n,'').replace(/\s{2,}/g,' ').trim() : (v?v+' ':'')+n;
+    markTags();
+  });
+}
+function markTime(){const v=normTime($('fTime').value); $('timeChips').querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.t===v))}
+function markTags(){const v=$('fNote').value; $('noteChips').querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',v.includes(c.dataset.n)))}
+$('fTime').addEventListener('input',markTime); $('fNote').addEventListener('input',markTags);
+$('minus').onclick=()=>{$('fCount').value=Math.max(1,(+$('fCount').value||1)-1)};
+$('plus').onclick=()=>{$('fCount').value=(+$('fCount').value||0)+1};
+
+function resetForm(){
+  editingId=null; $('form').reset(); $('fDate').value=sel; $('fTime').value='21:00'; $('fCount').value=2;
+  $('formTitle').textContent='新增訂位'; $('submitBtn').textContent='送出訂位'; $('cancelEdit').style.display='none';
+  $('sheet').classList.remove('edit'); markTime(); markTags();
+}
+function startEdit(r){
+  editingId=r.id;
+  $('fDate').value=r.date; $('fTime').value=normTime(r.time); $('fName').value=r.name; $('fPhone').value=r.phone;
+  $('fCount').value=r.count; $('fNote').value=r.note;
+  $('formTitle').textContent='修改：'+r.name; $('submitBtn').textContent='儲存修改'; $('cancelEdit').style.display='block';
+  $('sheet').classList.add('edit'); markTime(); markTags(); openSheet();
+}
+function openSheet(){ $('sheet').classList.add('open'); if(innerWidth<900) $('sheetBg').style.display='block'; }
+function closeSheet(){ $('sheet').classList.remove('open'); $('sheetBg').style.display='none'; }
+$('fab').onclick=()=>{resetForm();openSheet();setTimeout(()=>$('fName').focus(),250)};
+$('sheetBg').onclick=closeSheet; $('closeSheet').onclick=()=>{closeSheet(); if(editingId) resetForm()};
+$('cancelEdit').onclick=()=>{resetForm(); if(innerWidth<900) closeSheet()};
+
+$('form').onsubmit=async e=>{
+  e.preventDefault();
+  const time=normTime($('fTime').value);
+  if(!/^\d{2}:\d{2}$/.test(time)) return toast('時間格式像 21:30',true);
+  const row={date:$('fDate').value,time,name:$('fName').value.trim(),phone:$('fPhone').value.replace(/[\s-]/g,''),
+             count:String(+$('fCount').value||1),note:$('fNote').value.trim()};
+  const btn=$('submitBtn'); btn.disabled=true; btn.textContent='送出中…';
+  try{
+    if(editingId){
+      const j=await apiPost({action:'update',row:{...row,id:editingId}});
+      rows=rows.map(r=>r.id===editingId?j.row:r);
+      toast(`已更新 ${row.name}`);
+    }else{
+      const j=await apiPost({action:'create',row});
+      rows.push(j.row);
+      toast(`✓ ${label(row.date)} ${time} ${row.name} ${row.count}位`);
+    }
+    saveCache(); sel=row.date; resetForm(); render(); if(innerWidth<900) closeSheet();
+  }catch(err){ toast('送出失敗：'+err.message,true); }
+  finally{ btn.disabled=false; if(btn.textContent==='送出中…') btn.textContent=editingId?'儲存修改':'送出訂位'; }
+};
+
+/* ====== Toast / PIN ====== */
+let tt; function toast(m,err){const t=$('toast'); t.textContent=m; t.classList.toggle('err',!!err); t.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),2600)}
+function showPin(msg){ $('pinGate').style.display='flex'; $('pinErr').textContent=msg||''; setTimeout(()=>$('pinInput').focus(),50) }
+$('pinForm').onsubmit=async e=>{
+  e.preventDefault(); pin=$('pinInput').value.trim();
+  try{ await apiGet({action:'ping'}); localStorage.setItem(LS_PIN,pin); $('pinGate').style.display='none'; refresh(); }
+  catch(err){ $('pinErr').textContent = err.message==='PIN'?'密碼不對':'連線失敗，請再試一次'; }
+};
+
+/* ====== 啟動 ====== */
+buildChips(); loadCache(); resetForm(); render();
+if(!pin) showPin(); else refresh();
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden && pin) refresh() });
+setInterval(()=>{ if(!document.hidden && pin) refresh() }, 60000);
+</script>
+</body>
+</html>
