@@ -382,7 +382,7 @@ async function act(a,id){
   }
   if(a==='arr'){
     const prev=r.status; r.status = prev==='arrived'?'booked':'arrived'; render();
-    try{ await apiPost({action:'update',row:{id,status:r.status}}); saveCache(); }
+    try{ await apiPost({action:'update',row:{id,status:r.status}}); saveCache(); fetchCustomers(); }
     catch(e){ r.status=prev; render(); toast('更新失敗：'+e.message,true); }
   }
 }
